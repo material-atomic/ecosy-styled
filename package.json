@@ -56,9 +56,12 @@
     "agents",
     "CHANGELOG.md"
   ],
-  "repository": "git@github.com:material-atomic/ecosy-styled.git",
+  "repository": "git+ssh://git@github.com/material-atomic/ecosy-styled.git",
   "author": "Material Atomic <material@ecosy.io>",
   "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
   "agents": {
     "prompts": {
       "styled": "$this://agents/PROMPT.md"
