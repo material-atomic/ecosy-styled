@@ -1,4 +1,4 @@
-import type { ThemePalette, ThemeSize, ThemeSizeConfig } from "../types/theme";
+import type { ThemeSize, ThemeSizeConfig } from "../types/theme";
 
 const buttonSize: Record<ThemeSize, ThemeSizeConfig> = {
   "2xs": { height: 28, radius: 6, paddingHorizontal: 10, fontSize: 12, iconSize: 14, borderWidth: 1 },
@@ -40,73 +40,11 @@ const avatarSize: Record<ThemeSize, ThemeSizeConfig> = {
   "2xl": { height: 72, radius: 36 },
 };
 
-const components = {
+export const defaultComponents = {
   button: buttonSize,
   input: inputSize,
   card: cardSize,
   chip: buttonSize,
   dialog: cardSize,
   avatar: avatarSize,
-};
-
-const lightPalette: ThemePalette = {
-  primary: "#DC143C", // Crimson red (đỏ đô)
-  onPrimary: "#FFFFFF",
-  secondary: "#8B0000",
-  onSecondary: "#FFFFFF",
-  background: "#FFFFFF",
-  onBackground: "#000000",
-  surface: "#F5F5F5",
-  onSurface: "#000000",
-  surfaceVariant: "#E0E0E0",
-  onSurfaceVariant: "#000000",
-  outline: "#BDBDBD",
-  inverseSurface: "#121212",
-  inverseOnSurface: "#FFFFFF",
-  text: "#000000",
-  textSecondary: "#666666",
-  border: "#E0E0E0",
-  error: "#FF4444",
-  onError: "#FFFFFF",
-  success: "#4CAF50",
-  onSuccess: "#FFFFFF",
-};
-
-const darkPalette: ThemePalette = {
-  primary: "#FF6B6B", // Lighter red for dark mode
-  onPrimary: "#121212",
-  secondary: "#FF8A80",
-  onSecondary: "#121212",
-  background: "#121212",
-  onBackground: "#FFFFFF",
-  surface: "#1E1E1E",
-  onSurface: "#FFFFFF",
-  surfaceVariant: "#2A2A2A",
-  onSurfaceVariant: "#FFFFFF",
-  outline: "#777777",
-  inverseSurface: "#FFFFFF",
-  inverseOnSurface: "#121212",
-  text: "#FFFFFF",
-  textSecondary: "#BBBBBB",
-  border: "#333333",
-  error: "#FF6B6B",
-  onError: "#121212",
-  success: "#81C784",
-  onSuccess: "#121212",
-};
-
-/**
- * The standard default theme configuration containing full definitions 
- * for 'light' and 'dark' palettes as well as component size scales.
- * Provided as a sensible starting point for new applications.
- */
-export const defaultThemes = {
-  light: {
-    palette: lightPalette,
-    components,
-  },
-  dark: {
-    palette: darkPalette,
-    components,
-  },
 };

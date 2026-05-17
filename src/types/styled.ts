@@ -1,4 +1,4 @@
-import type { ThemeConfigs } from "./theme";
+import type { ThemeConfigs, ThemePalette } from "./theme";
 
 /**
  * Represents a function that returns a styling object based on the current theme.
@@ -56,13 +56,13 @@ export interface StyledMargin {
 }
 
 /** Shorthand for color style properties. */
-export interface StyledColors {
+export interface StyledColors<Palette extends ThemePalette = ThemePalette> {
   /** Map to `backgroundColor`. */
-  bg: string;
+  bg: string | keyof Palette;
   /** Map to `borderColor`. */
-  bc: string;
+  bc: string | keyof Palette;
   /** Map to `color`. */
-  c: string;
+  c: string | keyof Palette;
 }
 
 /** Shorthand for font and typography style properties. */
@@ -156,10 +156,13 @@ export interface StyledPosition {
  * The base interface representing all available styling shorthand properties.
  * These properties are mapped to their corresponding CSS/React Native style attributes.
  */
-export type StyledBaseProps<Flex extends FlexStyle = FlexStyle> =
+export type StyledBaseProps<
+  Flex extends FlexStyle = FlexStyle,
+  Palette extends ThemePalette = ThemePalette
+> =
   & StyledPadding
   & StyledMargin
-  & StyledColors
+  & StyledColors<Palette>
   & StyledFonts
   & StyledAlign
   & StyledFlexAlign<Flex>
@@ -170,6 +173,9 @@ export type StyledBaseProps<Flex extends FlexStyle = FlexStyle> =
  * Represents the final properties object accepted by a Styled component.
  * Allows each property to be either a static value or a theme-dependent function.
  */
-export type StyledProps<Flex extends FlexStyle = FlexStyle> = {
-  [K in keyof StyledBaseProps<Flex>]?: Styled<StyledBaseProps<Flex>[K]>;
+export type StyledProps<
+  Flex extends FlexStyle = FlexStyle,
+  Palette extends ThemePalette = ThemePalette
+> = {
+  [K in keyof StyledBaseProps<Flex, Palette>]?: Styled<StyledBaseProps<Flex, Palette>[K]>;
 };

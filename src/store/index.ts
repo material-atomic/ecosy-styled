@@ -1,10 +1,10 @@
 import { createStore, type PayloadAction } from "@ecosy/store";
-import { defaultThemes } from "../theme/default";
+import slateThemes from "../theme/slate";
 import type { ThemeState } from "../types/state";
 
 const initialState: ThemeState = {
   mode: "light",
-  themes: defaultThemes,
+  themes: slateThemes,
 };
 
 /**

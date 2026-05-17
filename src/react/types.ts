@@ -64,7 +64,10 @@ export type VariantConfig<Configs extends ThemeConfigs = ThemeConfigs> = Record<
 /**
  * Configuration options when creating a Styled component.
  */
-export interface StyledConfigs<V extends VariantConfig<any> = {}> {
+export interface StyledConfigs<
+  V extends VariantConfig<Configs>,
+  Configs extends ThemeConfigs = ThemeConfigs
+> {
   /** Optional custom display name for React DevTools. */
   displayName?: string;
   /** Custom variant definitions. */

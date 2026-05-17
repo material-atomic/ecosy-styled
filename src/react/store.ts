@@ -10,7 +10,7 @@ import {
 } from "react";
 import { createStore, type PayloadAction } from "@ecosy/store";
 import { createStoreOrder } from "@ecosy/react";
-import { defaultThemes } from "../theme/default";
+import slateThemes from "../theme/slate";
 import { resolveSxValue, variants } from "./utils";
 import { KEYS_MAPPING, propsToStyle } from "../styled/mapping";
 import { useWindowWidth } from "./hooks";
@@ -20,7 +20,7 @@ import type { Styled, StyledBaseProps, StyledProps, StylesCreator } from "../typ
 
 const initialState: ThemeState = {
   mode: "light",
-  themes: defaultThemes,
+  themes: slateThemes,
 };
 
 /**
@@ -35,6 +35,9 @@ export const { store, actions } = createStore({
     },
     setTheme(state, action: PayloadAction<Theme>) {
       state.mode = action.payload;
+    },
+    setThemes(state, action: PayloadAction<any>) {
+      state.themes = action.payload;
     },
   }
 });
@@ -179,10 +182,14 @@ export function useStyled<Props extends StyledProps>(props: Props) {
  * @param creator - An optional default style object or function based on the theme.
  * @param configs - Configuration for variants and display name.
  */
-export function styled<C extends ElementType, V extends VariantConfig<any> = {}>(
+export function styled<
+  C extends ElementType,
+  V extends VariantConfig<any> = {},
+  Config extends ThemeConfigs = ThemeConfigs
+>(
   Component: C,
   creator?: Styled<CSSProperties>,
-  configs?: StyledConfigs<V>
+  configs?: StyledConfigs<V, Config>
 ) {
   const StyledComponent = forwardRef<ComponentRef<C>, StyledComponentProps<C, V>>((props, ref) => {
     const { sx, style, ...rest } = props;
@@ -203,6 +210,10 @@ export function styled<C extends ElementType, V extends VariantConfig<any> = {}>
       Object.assign(otherProps, rest);
     }
 
+    if (otherProps.c === undefined) {
+      otherProps.c = "text";
+    }
+
     const { styled, other, theme } = useStyled(otherProps as StyledProps);
 
     const defaultStyle = useMemo(() => {
@@ -214,9 +225,10 @@ export function styled<C extends ElementType, V extends VariantConfig<any> = {}>
       
       const vStyle: Record<string, any> = {};
       Object.entries(configs.variants).forEach(([variantKey, variantValues]) => {
+        const values = variantValues as Record<string, any>;
         const variantPropValue = variantProps[variantKey] || configs.defaultVariants?.[variantKey];
-        if (variantPropValue && variantValues[variantPropValue as string]) {
-          const vCreator = variantValues[variantPropValue as string];
+        if (variantPropValue && values[variantPropValue as string]) {
+          const vCreator = values[variantPropValue as string];
           const resolvedVStyle = typeof vCreator === "function" ? (vCreator as StylesCreator<unknown>)(theme) : vCreator;
           Object.assign(vStyle, resolvedVStyle);
         }

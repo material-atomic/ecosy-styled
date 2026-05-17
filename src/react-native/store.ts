@@ -27,7 +27,7 @@ import {
 } from "react-native";
 import { createStore, type PayloadAction } from "@ecosy/store";
 import { createStoreOrder } from "@ecosy/react"
-import { defaultThemes } from "../theme/default";
+import slateThemes from "../theme/slate";
 import { resolveSxValue, variants } from "./utils";
 import { KEYS_MAPPING, propsToStyle } from "../styled/mapping";
 import type { InferStyle, NamedStyles, StyledComponentProps, SxProp, SxValue, ThemeState, StyledConfigs, VariantConfig } from "./types";
@@ -36,7 +36,7 @@ import type { Styled, StyledBaseProps, StyledProps, StylesCreator } from "../typ
 
 const initialState: ThemeState = {
   mode: "light",
-  themes: defaultThemes,
+  themes: slateThemes,
 };
 
 /**
@@ -51,6 +51,9 @@ export const { store, actions } = createStore({
     },
     setTheme(state, action: PayloadAction<Theme>) {
       state.mode = action.payload;
+    },
+    setThemes(state, action: PayloadAction<any>) {
+      state.themes = action.payload;
     },
   }
 });
@@ -156,6 +159,7 @@ export function useThemeFactory<Return>(
  */
 export function useStyled<Props extends StyledProps>(props: Props) {
   const theme = useTheme();
+  const { width } = useWindowDimensions();
 
   return useMemo(() => {
     let styled: Record<string, unknown> = {};
@@ -163,9 +167,13 @@ export function useStyled<Props extends StyledProps>(props: Props) {
 
     Object.entries(props).forEach(([key, value]) => {
       if (Object.keys(KEYS_MAPPING).includes(key)) {
-        styled = Object.assign(styled, propsToStyle({
+        const rawStyle = propsToStyle({
           [key]: typeof value === "function" ? value(theme) : value
-        }));
+        });
+        
+        Object.entries(rawStyle).forEach(([sKey, sValue]) => {
+          styled[sKey] = resolveSxValue(sKey, sValue as SxValue, theme, width);
+        });
       } else {
         other[key] = value;
       }
@@ -184,7 +192,7 @@ export function useStyled<Props extends StyledProps>(props: Props) {
       other: Omit<Props, keyof StyledProps>;
       theme: ThemeConfigs;
     };
-  }, [theme, props]);
+  }, [theme, props, width]);
 }
 
 /**
@@ -195,10 +203,14 @@ export function useStyled<Props extends StyledProps>(props: Props) {
  * @param creator - An optional default style object or function based on the theme.
  * @param configs - Configuration for variants and display name.
  */
-export function styled<C extends ComponentType<any>, V extends VariantConfig<any> = {}>(
+export function styled<
+  C extends ComponentType<any>,
+  V extends VariantConfig<any> = {},
+  Config extends ThemeConfigs = ThemeConfigs
+>(
   Component: C,
   creator?: Styled<ComponentProps<C>["style"]>,
-  configs?: StyledConfigs<V>
+  configs?: StyledConfigs<V, Config>
 ) {
   const StyledComponent = forwardRef<ComponentRef<C>, StyledComponentProps<C, V>>((props, ref) => {
     const { sx, style, ...rest } = props;
@@ -270,10 +282,6 @@ export function styled<C extends ComponentType<any>, V extends VariantConfig<any
   return StyledComponent as ComponentType<StyledComponentProps<C, V>>;
 }
 
-/** Base Text component with styling engine applied. */
-export const Text = styled(RNText);
-/** Base TextInput component with styling engine applied. */
-export const TextInput = styled(RNTextInput);
 /** Base View component with styling engine applied. */
 export const View = styled(RNView);
 /** Base Image component with styling engine applied. */
@@ -290,11 +298,29 @@ export const Pressable = styled(RNPressable);
 export const KeyboardAvoidingView = styled(RNKeyboardAvoidingView);
 /** Animated View component with styling engine applied. */
 export const AnimatedView = styled(Animated.View);
-/** Animated Text component with styling engine applied. */
-export const AnimatedText = styled(Animated.Text);
 /** Animated Image component with styling engine applied. */
 export const AnimatedImage = styled(Animated.Image);
 /** Animated ScrollView component with styling engine applied. */
 export const AnimatedScrollView = styled(Animated.ScrollView);
+
+/** Base Text component with styling engine applied. */
+export const Text = styled(RNText, (theme) => ({
+  color: theme.palette.text,
+}));
+
+/** Animated Text component with styling engine applied. */
+export const AnimatedText = styled(Animated.Text, (theme) => ({
+  color: theme.palette.text,
+}));
+
+/** Base TextInput component with styling engine applied. */
+export const TextInput = styled(RNTextInput, (theme) => ({
+  color: theme.palette.text,
+}));
+
+/** Animated TextInput component with styling engine applied. */
+export const AnimatedTextInput = styled(Animated.createAnimatedComponent(RNTextInput), (theme) => ({
+  color: theme.palette.text,
+}));
 
 export { variants };

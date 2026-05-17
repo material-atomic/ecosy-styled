@@ -46,14 +46,14 @@ Create your application's global theme store by hooking up `@ecosy/styled`'s the
 // store.ts
 import { createStore } from "@ecosy/store";
 import { getThemeSlice } from "@ecosy/styled/slice";
-import { defaultThemes } from "@ecosy/styled/theme/default";
+import slateThemes from "@ecosy/styled/theme/slate";
 
 export const { store, actions } = createStore({
   slices: {
     theme: getThemeSlice({
       initialState: {
         mode: "light",
-        themes: defaultThemes,
+        themes: slateThemes,
       }
     }),
   }

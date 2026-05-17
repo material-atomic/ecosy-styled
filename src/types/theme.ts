@@ -47,6 +47,8 @@ export interface ThemePalette {
   onSuccess: string;
 }
 
+export type Colors = keyof ThemePalette;
+
 /** Pre-defined supported theme modes. */
 export type Theme = "light" | "dark";
 

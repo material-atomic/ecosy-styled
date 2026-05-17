@@ -1,6 +1,6 @@
 {
   "name": "@ecosy/styled",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A zero-dependency, cross-platform styling engine for React Web and React Native.",
   "keywords": [
     "react",
@@ -45,10 +45,10 @@
       "import": "./dist/slice/index.mjs",
       "require": "./dist/slice/index.js"
     },
-    "./theme/default": {
-      "types": "./dist/theme/default.d.ts",
-      "import": "./dist/theme/default.mjs",
-      "require": "./dist/theme/default.js"
+    "./theme/*": {
+      "types": "./dist/theme/*.d.ts",
+      "import": "./dist/theme/*.mjs",
+      "require": "./dist/theme/*.js"
     }
   },
   "files": [

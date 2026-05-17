@@ -150,6 +150,7 @@ export function createStyled<
    */
   function useStyled<Props extends StyledProps>(props: Props) {
     const theme = useTheme();
+    const { width } = useWindowDimensions();
 
     return useMemo(() => {
       let styled: Record<string, unknown> = {};
@@ -157,9 +158,13 @@ export function createStyled<
 
       Object.entries(props).forEach(([key, value]) => {
         if (Object.keys(KEYS_MAPPING).includes(key)) {
-          styled = Object.assign(styled, propsToStyle({
+          const rawStyle = propsToStyle({
             [key]: typeof value === "function" ? value(theme) : value
-          }));
+          });
+          
+          Object.entries(rawStyle).forEach(([sKey, sValue]) => {
+            styled[sKey] = resolveSxValue(sKey, sValue as SxValue, theme as ThemeConfigs, width);
+          });
         } else {
           other[key] = value;
         }
@@ -178,7 +183,7 @@ export function createStyled<
         other: Omit<Props, keyof StyledProps>;
         theme: ThemeConfigs;
       };
-    }, [theme, props]);
+    }, [theme, props, width]);
   }
 
   /**
@@ -189,10 +194,14 @@ export function createStyled<
    * @param creator - An optional default style object or function based on the theme.
    * @param configs - Configuration for variants and display name.
    */
-  function styled<C extends ComponentType<any>, V extends VariantConfig<any> = {}>(
+  function styled<
+    C extends ComponentType<any>,
+    V extends VariantConfig<any> = {},
+    Config extends ThemeConfigs = ThemeConfigs
+  >(
     Component: C,
     creator?: Styled<ComponentProps<C>["style"]>,
-    configs?: StyledConfigs<V>
+    configs?: StyledConfigs<V, Config>
   ) {
     const StyledComponent = forwardRef<ComponentRef<C>, StyledComponentProps<C, V>>((props, ref) => {
       const { sx, style, ...rest } = props;
@@ -237,7 +246,7 @@ export function createStyled<
       const sxStyle = useMemo(() => {
         if (!sx) return {};
 
-        return Object.entries(props.sx).reduce<Record<string, unknown>>((acc, [key, value]) => {
+        return Object.entries(props.sx || {}).reduce<Record<string, unknown>>((acc, [key, value]) => {
           const resolved = resolveSxValue(key, value as SxValue, theme as ThemeConfigs, width);
           if (resolved === undefined) {
             return acc;
@@ -264,8 +273,12 @@ export function createStyled<
     return StyledComponent as ComponentType<StyledComponentProps<C, V>>;
   }
 
-  const Text = styled(RNText);
-  const TextInput = styled(RNTextInput);
+  const Text = styled(RNText, (theme) => ({
+    color: (theme as ThemeConfigs).palette.text,
+  }));
+  const TextInput = styled(RNTextInput, (theme) => ({
+    color: (theme as ThemeConfigs).palette.text,
+  }));
   const View = styled(RNView);
   const Image = styled(RNImage);
   const TouchableOpacity = styled(RNTouchableOpacity);
@@ -274,7 +287,12 @@ export function createStyled<
   const Pressable = styled(RNPressable);
   const KeyboardAvoidingView = styled(RNKeyboardAvoidingView);
   const AnimatedView = styled(Animated.View);
-  const AnimatedText = styled(Animated.Text);
+  const AnimatedText = styled(Animated.Text, (theme) => ({
+    color: (theme as ThemeConfigs).palette.text,
+  }));
+  const AnimatedTextInput = styled(Animated.createAnimatedComponent(RNTextInput), (theme) => ({
+    color: (theme as ThemeConfigs).palette.text,
+  }));
   const AnimatedImage = styled(Animated.Image);
   const AnimatedScrollView = styled(Animated.ScrollView);
 
@@ -296,6 +314,7 @@ export function createStyled<
     KeyboardAvoidingView,
     AnimatedView,
     AnimatedText,
+    AnimatedTextInput,
     AnimatedImage,
     AnimatedScrollView,
     variants,

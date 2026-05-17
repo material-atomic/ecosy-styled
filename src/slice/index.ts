@@ -12,12 +12,12 @@ import {
   type SliceMap
 } from "@ecosy/store";
 import { merge } from "@ecosy/core";
-import { defaultThemes } from "../theme/default";
+import slateThemes from "../theme/slate";
 import type { ThemeState } from "../types/state";
 
 const defaultState: ThemeState = {
   mode: "light",
-  themes: defaultThemes,
+  themes: slateThemes,
 }
 
 /**

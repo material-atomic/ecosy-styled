@@ -22,10 +22,10 @@ import type {
 import { createStoreOrder } from "@ecosy/react";
 import { KEYS_MAPPING, propsToStyle } from "../styled/mapping";
 import { resolveSxValue, variants } from "./utils";
+import { useWindowWidth } from "./hooks";
 import type { Subscriber } from "@ecosy/core";
 import type { Styled, StyledProps, StylesCreator } from "../types/styled";
 import type { ThemeConfigs } from "../types/theme";
-import { useWindowWidth } from "./hooks";
 
 interface StoreState<State extends ThemeState> {
   theme: State;
@@ -134,6 +134,7 @@ export function createStyled<
    */
   function useStyled<Props extends StyledProps>(props: Props) {
     const theme = useTheme();
+    const width = useWindowWidth();
 
     return useMemo(() => {
       let styled: Record<string, unknown> = {};
@@ -141,9 +142,13 @@ export function createStyled<
 
       Object.entries(props).forEach(([key, value]) => {
         if (Object.keys(KEYS_MAPPING).includes(key)) {
-          styled = Object.assign(styled, propsToStyle({
+          const rawStyle = propsToStyle({
             [key]: typeof value === "function" ? value(theme) : value
-          }));
+          });
+          
+          Object.entries(rawStyle).forEach(([sKey, sValue]) => {
+            styled[sKey] = resolveSxValue(sKey, sValue as SxValue, theme as ThemeConfigs, width);
+          });
         } else {
           other[key] = value;
         }
@@ -158,7 +163,7 @@ export function createStyled<
         other: Omit<Props, keyof StyledProps>;
         theme: ThemeConfigs;
       };
-    }, [theme, props]);
+    }, [theme, props, width]);
   }
 
   /**
@@ -169,10 +174,14 @@ export function createStyled<
    * @param creator - An optional default style object or function based on the theme.
    * @param configs - Configuration for variants and display name.
    */
-  function styled<C extends ElementType, V extends VariantConfig<any> = {}>(
+  function styled<
+    C extends ElementType,
+    V extends VariantConfig<any> = {},
+    Config extends ThemeConfigs = ThemeConfigs
+  >(
     Component: C,
     creator?: Styled<CSSProperties>,
-    configs?: StyledConfigs<V>
+    configs?: StyledConfigs<V, Config>
   ) {
     const StyledComponent = forwardRef<ComponentRef<C>, StyledComponentProps<C, V>>((props, ref) => {
       const { sx, style, ...rest } = props;
@@ -193,6 +202,10 @@ export function createStyled<
         Object.assign(otherProps, rest);
       }
 
+      if (otherProps.c === undefined) {
+        otherProps.c = "text";
+      }
+
       const { styled, other, theme } = useStyled(otherProps as StyledProps);
 
       const defaultStyle = useMemo(() => {
@@ -204,9 +217,10 @@ export function createStyled<
         
         const vStyle: Record<string, any> = {};
         Object.entries(configs.variants).forEach(([variantKey, variantValues]) => {
+          const values = variantValues as Record<string, any>;
           const variantPropValue = variantProps[variantKey] || configs.defaultVariants?.[variantKey];
-          if (variantPropValue && variantValues[variantPropValue as string]) {
-            const vCreator = variantValues[variantPropValue as string];
+          if (variantPropValue && values[variantPropValue as string]) {
+            const vCreator = values[variantPropValue as string];
             const resolvedVStyle = typeof vCreator === "function" ? (vCreator as StylesCreator<unknown>)(theme) : vCreator;
             Object.assign(vStyle, resolvedVStyle);
           }
