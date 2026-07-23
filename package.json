@@ -16,39 +16,60 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "react-native": "./src/index.ts",
       "types": "./dist/index.d.ts",
+      "source": "./src/index.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js"
     },
     "./react": {
+      "react-native": "./src/react/index.ts",
       "types": "./dist/react/index.d.ts",
+      "source": "./src/react/index.ts",
       "import": "./dist/react/index.mjs",
       "require": "./dist/react/index.js"
     },
     "./react/styled": {
+      "react-native": "./src/react/styled.ts",
       "types": "./dist/react/styled.d.ts",
+      "source": "./src/react/styled.ts",
       "import": "./dist/react/styled.mjs",
       "require": "./dist/react/styled.js"
     },
     "./react-native": {
+      "react-native": "./src/react-native/index.ts",
       "types": "./dist/react-native/index.d.ts",
+      "source": "./src/react-native/index.ts",
       "import": "./dist/react-native/index.mjs",
       "require": "./dist/react-native/index.js"
     },
     "./react-native/styled": {
+      "react-native": "./src/react-native/styled.ts",
       "types": "./dist/react-native/styled.d.ts",
+      "source": "./src/react-native/styled.ts",
       "import": "./dist/react-native/styled.mjs",
       "require": "./dist/react-native/styled.js"
     },
     "./slice": {
+      "react-native": "./src/slice/index.ts",
       "types": "./dist/slice/index.d.ts",
+      "source": "./src/slice/index.ts",
       "import": "./dist/slice/index.mjs",
       "require": "./dist/slice/index.js"
     },
     "./theme/*": {
+      "react-native": "./src/theme/*.ts",
       "types": "./dist/theme/*.d.ts",
+      "source": "./src/theme/*.ts",
       "import": "./dist/theme/*.mjs",
       "require": "./dist/theme/*.js"
+    },
+    "./types/*": {
+      "react-native": "./src/types/*.ts",
+      "types": "./dist/types/*.d.ts",
+      "source": "./src/types/*.ts",
+      "import": "./dist/types/*.mjs",
+      "require": "./dist/types/*.js"
     }
   },
   "files": [

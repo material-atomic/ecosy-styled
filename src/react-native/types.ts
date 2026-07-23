@@ -13,6 +13,7 @@ import type {
   TextStyleIOS,
   TransformsStyle,
   ViewStyle,
+  StyleProp,
 } from "react-native";
 import type {
   ThemePalette,
@@ -21,7 +22,7 @@ import type {
   Theme,
   ThemeConfigs,
 } from "../types/theme";
-import type { ComponentPropsWithRef, ComponentType } from "react";
+import type { ComponentProps, ComponentType } from "react";
 import type { Styled, StyledProps } from "../types/styled";
 import type { ThemeState as BaseThemeState } from "../types/state";
 
@@ -113,19 +114,34 @@ export type ResponsiveSelect<T> = {
  */
 export type SxValue = string | number | boolean | null | undefined | PlatformSelect<string | number | boolean> | ResponsiveSelect<string | number | boolean>;
 
+export type SxPropObject<
+  Config extends ThemeSizeConfig = ThemeSizeConfig,
+  Palette extends ThemePalette = ThemePalette
+> = {
+  [K in keyof (ViewStyle & TextStyle)]?: 
+    | (ViewStyle & TextStyle)[K] 
+    | SxValue 
+    | (keyof ThemeConfigs<Config, Palette>) 
+    | PlatformSelect<keyof ThemeConfigs<Config, Palette>> 
+    | ResponsiveSelect<keyof ThemeConfigs<Config, Palette>>
+    | PlatformSelect<(ViewStyle & TextStyle)[K]>
+    | ResponsiveSelect<(ViewStyle & TextStyle)[K]>;
+};
+
 /**
- * The type for the `sx` prop, allowing both styled system shorthands and custom standard styles.
- */
+  * The type for the `sx` prop, allowing both styled system shorthands and custom standard styles.
+  * Supports either a static object or a function that receives the theme and returns an object.
+  */
 export type SxProp<
   Config extends ThemeSizeConfig = ThemeSizeConfig,
   Palette extends ThemePalette = ThemePalette
-> = Partial<Record<keyof (ViewStyle & TextStyle), SxValue | (keyof ThemeConfigs<Config, Palette>) | PlatformSelect<keyof ThemeConfigs<Config, Palette>> | ResponsiveSelect<keyof ThemeConfigs<Config, Palette>>>>;
+> = SxPropObject<Config, Palette> | ((theme: ThemeConfigs<Config, Palette>) => SxPropObject<Config, Palette>);
 
 /**
  * Defines the structure for CVA-like variants, mapping a variant category and its string keys
  * to specific conditional styles in React Native.
  */
-export type VariantConfig<Configs extends ThemeConfigs = ThemeConfigs> = Record<string, Record<string, Styled<ViewStyle | TextStyle | ImageStyle, Configs>>>;
+export type VariantConfig<Configs extends ThemeConfigs = ThemeConfigs, S = ViewStyle | TextStyle | ImageStyle> = Record<string, Record<string, Styled<S, Configs>>>;
 
 /**
  * Configuration options when creating a Styled component.
@@ -155,20 +171,28 @@ export type VariantProps<V> = V extends VariantConfig<any>
  * The combined props for a Styled React Native component, including base props,
  * styling props (`sx`, `style`), and active variant selections.
  */
+type ExtractStyle<T> = T extends StyleProp<infer U> ? U : T extends undefined ? never : T;
+type SafeStyle<T> = StyleProp<ExtractStyle<T>>;
+
 export type StyledComponentProps<
   C extends ComponentType<any>,
-  V extends VariantConfig<any> = Record<string, any>
-> = ComponentPropsWithRef<C> & StyledProps & VariantProps<V> & {
-  sx?: SxProp;
-};
+  V extends VariantConfig<any> = {}
+> = Omit<ComponentProps<C>, "style"> &
+  StyledProps &
+  VariantProps<V> & {
+    sx?: SxProp;
+    style?: SafeStyle<ComponentProps<C>["style"]>;
+  };
 
 /** Map of named style keys to their respective Style definition types. */
 export type NamedStyles<T> = { [P in keyof T]: ViewStyled | TextStyled | ImageStyled };
 
 /** Infers a compiled StyleSheet representation from a `NamedStyles` map. */
-export type InferStyle<T extends NamedStyles<T> | NamedStyles<any>> = {
-  [P in keyof T]: ViewStyle | TextStyle | ImageStyle;
-}
+export type InferStyle<T> = {
+  [P in keyof T]: {
+    [K in keyof T[P]]: T[P][K] extends (theme: unknown) => infer R ? R : T[P][K];
+  };
+};
 
 /** Extracts and normalizes the config, palette, and theme mode from a `ThemeState`. */
 export type InferTheme<State> = State extends ThemeState<infer Config, infer Palette, infer ThemeMode>
@@ -183,7 +207,9 @@ export type InferTheme<State> = State extends ThemeState<infer Config, infer Pal
   };
 
 /** Attaches the `StyledProps` generic to a base Props type. */
-export type PropsWithStyled<Props> = Props & StyledProps;
+export type PropsWithStyled<Props> = Omit<Props, "style"> & StyledProps & {
+  style?: SafeStyle<Props extends { style?: infer S } ? S : any>;
+};
 /** Text component props mixed with `StyledProps`. */
 export type TextProps = PropsWithStyled<RNTextProps>;
 /** View component props mixed with `StyledProps`. */

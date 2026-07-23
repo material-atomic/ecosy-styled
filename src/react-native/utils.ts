@@ -115,10 +115,11 @@ export function resolveSxValue(key: string, value: SxValue, theme: ThemeConfigs,
  * @returns A resolver function `(theme, props) => StyleProp`.
  */
 export function variants<
-  V extends VariantConfig<Configs>,
-  Configs extends ThemeConfigs = ThemeConfigs
+  Configs extends ThemeConfigs = ThemeConfigs,
+  S extends ViewStyle | TextStyle | ImageStyle = ViewStyle | TextStyle | ImageStyle,
+  V extends VariantConfig<Configs, ViewStyle | TextStyle | ImageStyle> = VariantConfig<Configs, ViewStyle | TextStyle | ImageStyle>
 >(
-  base?: Styled<ViewStyle | TextStyle | ImageStyle, Configs>,
+  base?: Styled<S, Configs>,
   configs?: {
     variants?: V;
     defaultVariants?: {
@@ -129,7 +130,7 @@ export function variants<
   return function resolveVariants(
     theme: Configs,
     props?: { [K in keyof V]?: keyof V[K] }
-  ) {
+  ): S {
     const vStyle: Record<string, unknown> = {};
 
     if (base) {
@@ -148,6 +149,6 @@ export function variants<
       });
     }
 
-    return vStyle as ViewStyle | TextStyle | ImageStyle;
+    return vStyle as S;
   };
 }

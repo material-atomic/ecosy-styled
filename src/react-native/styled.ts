@@ -6,6 +6,9 @@ import {
   type ComponentProps,
   type ComponentRef,
   type ComponentType,
+  type ForwardRefExoticComponent,
+  type PropsWithoutRef,
+  type RefAttributes,
 } from "react";
 import {
   StyleSheet,
@@ -20,10 +23,8 @@ import {
   FlatList as RNFlatList,
   Pressable as RNPressable,
   KeyboardAvoidingView as RNKeyboardAvoidingView,
-  type ImageStyle,
   type StyleProp,
-  type TextStyle,
-  type ViewStyle
+  type FlatListProps
 } from "react-native";
 import type {
   InferStyle,
@@ -77,7 +78,7 @@ export function createStyled<
    * @param creator - A function returning style objects based on the current theme.
    * @returns A hook returning `{ styles, theme }`.
    */
-  function makeStyles<T extends NamedStyles<T> | NamedStyles<any>>(creator: StylesCreator<T>) {
+  function makeStyles<T extends NamedStyles<T> | NamedStyles<unknown>>(creator: StylesCreator<T>) {
     return function useStyles() {
       const theme = useTheme();
 
@@ -85,17 +86,17 @@ export function createStyled<
         const styles = creator(theme);
 
         const styled = Object.entries(styles).reduce((acc, [key, item]) => {
-          const style = Object.entries(item).reduce<Record<string, unknown>>((a, [k, v]) => {
+          const style = Object.entries(item as Record<string, unknown>).reduce<Record<string, unknown>>((a, [k, v]) => {
             a[k] = typeof v === "function" ? v(theme) : v;
             return a;
-          }, {}) as ViewStyle | TextStyle | ImageStyle;
+          }, {});
 
-          acc[key as keyof T] = style;
+          acc[key as keyof T] = style as InferStyle<T>[keyof T];
 
           return acc;
         }, {} as InferStyle<T>);
 
-        return StyleSheet.create(styled);
+        return StyleSheet.create(styled as StyleSheet.NamedStyles<InferStyle<T>>) as unknown as InferStyle<T>;
       }, [theme]);
 
       return { styles, theme };
@@ -114,9 +115,14 @@ export function createStyled<
     const { width } = useWindowDimensions();
 
     return useMemo(() => {
-      if (!sx) return {};
+      const sxArray = Array.isArray(sx) ? sx : [sx];
+      const resolvedSx = sxArray.reduce((acc, curr) => {
+        if (!curr) return acc;
+        const resolved = typeof curr === 'function' ? (curr as (theme: any) => any)(theme) : curr;
+        return { ...acc, ...resolved };
+      }, {});
 
-      return Object.entries(sx).reduce<Record<string, unknown>>((acc, [key, value]) => {
+      return Object.entries(resolvedSx).reduce<Record<string, unknown>>((acc, [key, value]) => {
         const resolved = resolveSxValue(key, value as SxValue, theme as ThemeConfigs, width);
         if (resolved === undefined) {
           return acc;
@@ -246,7 +252,9 @@ export function createStyled<
       const sxStyle = useMemo(() => {
         if (!sx) return {};
 
-        return Object.entries(props.sx || {}).reduce<Record<string, unknown>>((acc, [key, value]) => {
+        const resolvedSx = typeof sx === 'function' ? (sx as (t: any) => any)(theme) : sx;
+
+        return Object.entries(resolvedSx || {}).reduce<Record<string, unknown>>((acc, [key, value]) => {
           const resolved = resolveSxValue(key, value as SxValue, theme as ThemeConfigs, width);
           if (resolved === undefined) {
             return acc;
@@ -268,9 +276,9 @@ export function createStyled<
       });
     });
 
-    StyledComponent.displayName = configs?.displayName || Component.displayName || `Styled(${Component.displayName || Component.name})`;
-
-    return StyledComponent as ComponentType<StyledComponentProps<C, V>>;
+    return StyledComponent as unknown as ForwardRefExoticComponent<
+      PropsWithoutRef<StyledComponentProps<C, V>> & RefAttributes<ComponentRef<C>>
+    >;
   }
 
   const Text = styled(RNText, (theme) => ({
@@ -283,7 +291,11 @@ export function createStyled<
   const Image = styled(RNImage);
   const TouchableOpacity = styled(RNTouchableOpacity);
   const ScrollView = styled(RNScrollView);
-  const FlatList = styled(RNFlatList);
+  const FlatList = styled(RNFlatList) as unknown as <T>(
+    props: StyledComponentProps<any, any> & 
+      Omit<FlatListProps<T>, 'style'> & 
+      { ref?: React.Ref<RNFlatList<T>> }
+  ) => React.ReactElement;
   const Pressable = styled(RNPressable);
   const KeyboardAvoidingView = styled(RNKeyboardAvoidingView);
   const AnimatedView = styled(Animated.View);

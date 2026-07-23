@@ -4,8 +4,11 @@ import {
   forwardRef,
   useMemo,
   type ComponentProps,
-  type ComponentRef,
   type ComponentType,
+  type ForwardRefExoticComponent,
+  type PropsWithoutRef,
+  type RefAttributes,
+  type ComponentRef,
 } from "react";
 import {
   StyleSheet,
@@ -21,9 +24,7 @@ import {
   Pressable as RNPressable,
   KeyboardAvoidingView as RNKeyboardAvoidingView,
   type StyleProp,
-  type ImageStyle,
-  type TextStyle,
-  type ViewStyle
+  type FlatListProps
 } from "react-native";
 import { createStore, type PayloadAction } from "@ecosy/store";
 import { createStoreOrder } from "@ecosy/react"
@@ -86,7 +87,7 @@ export function useTheme() {
  * @param creator - A function returning style objects based on the current theme.
  * @returns A hook returning `{ styles, theme }`.
  */
-export function makeStyles<T extends NamedStyles<T> | NamedStyles<any>>(creator: StylesCreator<T>) {
+export function makeStyles<T extends NamedStyles<T> | NamedStyles<unknown>>(creator: StylesCreator<T>) {
   return function useStyles() {
     const theme = useTheme();
 
@@ -94,17 +95,17 @@ export function makeStyles<T extends NamedStyles<T> | NamedStyles<any>>(creator:
       const styles = creator(theme);
 
       const styled = Object.entries(styles).reduce((acc, [key, item]) => {
-        const style = Object.entries(item).reduce<Record<string, unknown>>((a, [k, v]) => {
+        const style = Object.entries(item as Record<string, unknown>).reduce<Record<string, unknown>>((a, [k, v]) => {
           a[k] = typeof v === "function" ? v(theme) : v;
           return a;
-        }, {}) as ViewStyle | TextStyle | ImageStyle;
+        }, {});
 
-        acc[key as keyof T] = style;
+        acc[key as keyof T] = style as InferStyle<T>[keyof T];
 
         return acc;
       }, {} as InferStyle<T>);
 
-      return StyleSheet.create(styled);
+      return StyleSheet.create(styled as StyleSheet.NamedStyles<InferStyle<T>>) as unknown as InferStyle<T>;
     }, [theme]);
 
     return { styles, theme };
@@ -253,9 +254,9 @@ export function styled<
     }, [variantProps, theme]);
 
     const sxStyle = useMemo(() => {
-      if (!sx) return {};
+      if (!props.sx) return {};
 
-      return Object.entries(props.sx).reduce<Record<string, unknown>>((acc, [key, value]) => {
+      return Object.entries(props.sx as Record<string, unknown>).reduce<Record<string, unknown>>((acc, [key, value]) => {
         const resolved = resolveSxValue(key, value as SxValue, theme, width);
         if (resolved === undefined) {
           return acc;
@@ -279,7 +280,9 @@ export function styled<
 
   StyledComponent.displayName = configs?.displayName || Component.displayName || `Styled(${Component.displayName || Component.name})`;
 
-  return StyledComponent as ComponentType<StyledComponentProps<C, V>>;
+  return StyledComponent as unknown as ForwardRefExoticComponent<
+    PropsWithoutRef<StyledComponentProps<C, V>> & RefAttributes<ComponentRef<C>>
+  >;
 }
 
 /** Base View component with styling engine applied. */
@@ -291,7 +294,11 @@ export const TouchableOpacity = styled(RNTouchableOpacity);
 /** Base ScrollView component with styling engine applied. */
 export const ScrollView = styled(RNScrollView);
 /** Base FlatList component with styling engine applied. */
-export const FlatList = styled(RNFlatList);
+export const FlatList = styled(RNFlatList) as unknown as <ItemT = any>(
+  props: FlatListProps<ItemT> & 
+    StyledProps & 
+    { sx?: SxProp, ref?: React.Ref<RNFlatList<ItemT>> }
+) => React.ReactElement | null;
 /** Base Pressable component with styling engine applied. */
 export const Pressable = styled(RNPressable);
 /** Base KeyboardAvoidingView component with styling engine applied. */
